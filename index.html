@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamArc</title>
+    
+    <!-- Logo Configurations -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <!-- Fonts & Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #05070a; 
+            --bg-surface: #10141d; 
+            --brand-gradient: linear-gradient(135deg, #29abe2 0%, #9e00ff 100%);
+            --brand-glow: 0 0 20px rgba(41, 171, 226, 0.4);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --error: #ff4b4b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Outfit', sans-serif; }
+        body { background-color: var(--bg-deep); color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- BUTTONS --- */
+        .btn { border: none; border-radius: 12px; padding: 14px 24px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; }
+        .btn:active { transform: scale(0.96); }
+        .btn-brand { background: var(--brand-gradient); color: white; box-shadow: var(--brand-glow); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-glass { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); color: white; border: 1px solid var(--border); }
+        .btn-danger { background: rgba(255, 75, 75, 0.15); color: #ff4b4b; border: 1px solid rgba(255, 75, 75, 0.3); }
+        .btn-text-danger { background: transparent; color: #ff4b4b; font-size: 0.85rem; padding: 5px; margin-top: 5px; border: none; cursor: pointer; text-decoration: underline; }
+
+        /* --- NAVBAR --- */
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(5,7,10,0.95) 0%, rgba(5,7,10,0.8) 100%); backdrop-filter: blur(10px); border-bottom: 1px solid transparent; transition: 0.3s; }
+        .navbar.scrolled { background: rgba(5, 7, 10, 0.98); border-bottom: 1px solid var(--border); }
+        
+        .logo-group { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { height: 32px; width: auto; object-fit: contain; }
+        .logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: 0.5px; background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Desktop Links */
+        .nav-links { display: none; gap: 30px; margin-left: 40px; }
+        .top-link { color: var(--text-sub); font-weight: 500; cursor: pointer; transition: 0.3s; position: relative; }
+        .top-link:hover, .top-link.active { color: white; }
+        .top-link.active::after { content: ''; position: absolute; bottom: -5px; left: 0; right: 0; height: 3px; background: var(--brand-gradient); }
+
+        .nav-icons { display: flex; gap: 15px; align-items: center; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; border: 1px solid var(--border); cursor: pointer; color: white; overflow: hidden; }
+        .icon-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- HERO SECTION --- */
+        .hero { height: 72vh; position: relative; display: flex; align-items: flex-end; background-size: cover; background-position: center; }
+        .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg-deep) 5%, rgba(5,7,10,0.4) 60%, transparent 100%); }
+        .hero-content { position: relative; z-index: 10; padding: 25px; width: 100%; max-width: 600px; margin-bottom: 10px; }
+        .hero-title { font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .hero-btns { display: flex; gap: 15px; margin-top: 20px; }
+
+        /* --- CARDS & LISTS --- */
+        .section { margin-top: 35px; }
+        .section-title { padding: 0 25px; font-size: 1.2rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ''; width: 4px; height: 18px; background: var(--brand-gradient); border-radius: 2px; }
+        
+        .scroll-list { display: flex; gap: 15px; overflow-x: auto; padding: 0 25px 25px; scrollbar-width: none; }
+        .scroll-list::-webkit-scrollbar { display: none; }
+        
+        .card { flex: 0 0 130px; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 2/3; background: var(--bg-surface); cursor: pointer; transition: transform 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; padding: 100px 20px 20px; }
+        
+        /* Category Chips */
+        .category-scroll { display: flex; gap: 10px; padding: 10px 20px; overflow-x: auto; scrollbar-width: none; margin-top: 90px; }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip { padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; color: var(--text-sub); font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+        .cat-chip.active { background: var(--brand-gradient); color: white; border-color: transparent; }
+
+        /* --- MODALS & OVERLAYS --- */
+        .overlay { position: fixed; inset: 0; background: var(--bg-deep); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .auth-box { width: 90%; max-width: 400px; padding: 30px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; text-align: center; }
+        .auth-input { width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; color: white; margin-bottom: 15px; outline: none; }
+        .auth-toggle { color: #29abe2; cursor: pointer; font-weight: 600; margin-top: 15px; display: inline-block; }
+        .auth-options { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--text-sub); font-size: 0.9rem; justify-content: flex-start; padding-left: 5px; }
+        
+        /* Profile Modal Specifics */
+        .profile-img-lg { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #29abe2; margin-bottom: 10px; cursor: pointer; }
+        .upload-hint { font-size: 0.8rem; color: var(--text-sub); margin-top: 2px; }
+
+        /* Details Modal (Slide Up) */
+        .details-modal { position: fixed; inset: 0; background: var(--bg-deep); z-index: 200; overflow-y: auto; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); }
+        .details-modal.active { transform: translateY(0); }
+        .modal-header { height: 45vh; position: relative; background-size: cover; background-position: center; }
+        .modal-header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-deep), transparent); }
+        .close-btn { position: absolute; top: 25px; right: 25px; z-index: 210; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        .modal-body { padding: 0 25px 50px; position: relative; z-index: 5; transform: translateY(-50px); }
+
+        /* Series Episode List */
+        .episode-row { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .episode-row:hover { background: rgba(255,255,255,0.05); }
+        .ep-thumb { width: 120px; height: 68px; aspect-ratio: 16/9; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+        .ep-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .season-picker { background: var(--bg-surface); color: white; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 15px; border: 1px solid var(--border); }
+
+        /* Search Overlay */
+        .search-wrap { position: fixed; inset: 0; background: var(--bg-deep); z-index: 250; display: flex; flex-direction: column; }
+        .search-header { padding: 20px; background: rgba(5,7,10,0.95); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        #search-input { flex: 1; background: transparent; border: none; color: white; font-size: 1rem; padding: 10px; }
+
+        /* Mobile Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(5,7,10,0.95); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 90; }
+        .nav-item { color: var(--text-sub); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
+        .nav-item.active { color: white; }
+        .nav-item.active i { color: #29abe2; }
+
+        @media (min-width: 768px) {
+            .nav-links { display: flex; }
+            .bottom-nav { display: none !important; }
+            body { padding-bottom: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. AUTH MODAL (Login / Signup) -->
+    <div id="auth-modal" class="overlay">
+        <div class="auth-box fade-in">
+            <h2 id="auth-title" style="margin-bottom:10px;">Welcome Back</h2>
+            <p style="color:var(--text-sub); margin-bottom:25px;">Sign in to access your account</p>
+            
+            <input type="text" id="auth-user" class="auth-input" placeholder="Username">
+            <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
+            
+            <!-- Keep me signed in -->
+            <div class="auth-options">
+                <input type="checkbox" id="remember-me" style="accent-color:#29abe2; width:16px; height:16px;" checked>
+                <label for="remember-me">Keep me signed in</label>
+            </div>
+
+            <p id="auth-error" style="color:var(--error); font-size:0.8rem; margin-bottom:15px; display:none;"></p>
+            
+            <button class="btn btn-brand" style="width:100%" onclick="handleAuth()">
+                <span id="auth-btn-text">Sign In</span>
+            </button>
+            
+            <div style="margin-top:20px; font-size:0.9rem; color:var(--text-sub);">
+                <span id="auth-msg">New here?</span> 
+                <span class="auth-toggle" onclick="toggleAuthMode()" id="auth-toggle-text">Create Account</span>
+            </div>
+            <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:10px;">
+                <span style="font-size:0.8rem; color:gray; cursor:pointer" onclick="guestLogin()">Continue as Guest</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PROFILE SETTINGS MODAL -->
+    <div id="profile-modal" class="overlay hidden" style="z-index: 1100;">
+        <div class="auth-box fade-in">
+            <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:25px;">
+                <!-- Avatar Upload -->
+                <label for="avatar-input">
+                    <img src="" id="profile-preview" class="profile-img-lg" alt="Profile">
+                </label>
+                <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="handleAvatarChange(event)">
+                
+                <div id="upload-hint" class="upload-hint">Click image to change</div>
+                <button id="remove-avatar-btn" class="btn-text-danger hidden" onclick="removeAvatar()">Remove Picture</button>
+
+                <h2 id="profile-username" style="margin-top:15px;">Username</h2>
+            </div>
+            
+            <button id="save-profile-btn" class="btn btn-brand" style="width:100%; margin-bottom:10px;" onclick="saveProfileChanges()">
+                Save Changes
+            </button>
+            <button class="btn btn-danger" style="width:100%;" onclick="logout()">
+                Log Out
+            </button>
+            <div style="margin-top:20px; cursor:pointer; color:var(--text-sub);" onclick="document.getElementById('profile-modal').classList.add('hidden')">Cancel</div>
+        </div>
+    </div>
+
+    <!-- 3. NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div style="display:flex; align-items:center;">
+            <div class="logo-group" onclick="nav('home')">
+                <img src="logo.png" class="logo-img" onerror="this.style.display='none'"> 
+                <span class="logo-text">STREAMARC</span> 
+            </div>
+            <div class="nav-links">
+                <div class="top-link active" data-tab="home" onclick="nav('home')">Home</div>
+                <div class="top-link" data-tab="movies" onclick="nav('movies')">Movies</div>
+                <div class="top-link" data-tab="series" onclick="nav('series')">Series</div>
+                <div class="top-link" data-tab="mylist" onclick="nav('mylist')">My List</div>
+            </div>
+        </div>
+        <div class="nav-icons">
+            <div class="icon-btn" onclick="openSearch()"><i class="fas fa-search"></i></div>
+            <div class="icon-btn" onclick="openProfileModal()">
+                <img id="nav-avatar-img" src="" style="display:none;">
+                <i id="nav-avatar-icon" class="fas fa-user"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 4. TAB VIEWS -->
+    
+    <!-- HOME -->
+    <div id="tab-home" class="view fade-in">
+        <div class="hero" id="hero">
+            <div class="hero-content">
+                <div class="hero-title" id="hero-title">Loading...</div>
+                <div style="color:#ddd; margin-bottom:20px;">
+                    <span id="hero-year"></span> • <span id="hero-genre"></span>
+                </div>
+                <div class="hero-btns">
+                    <button class="btn btn-brand" id="hero-play" style="flex:1"><i class="fas fa-play"></i> Watch</button>
+                    <button class="btn btn-glass" id="hero-list-btn" style="width:50px;"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section"><div class="section-title">New Releases</div><div class="scroll-list" id="row-new"></div></div>
+        <div class="section"><div class="section-title">Movies</div><div class="scroll-list" id="row-movies"></div></div>
+        <div class="section"><div class="section-title">Series</div><div class="scroll-list" id="row-series"></div></div>
+        <div id="custom-home-sections"></div>
+    </div>
+
+    <!-- MOVIES -->
+    <div id="tab-movies" class="view hidden fade-in">
+        <div class="category-scroll" id="cat-movies"></div>
+        <div class="grid-view" id="grid-movies"></div>
+    </div>
+
+    <!-- SERIES -->
+    <div id="tab-series" class="view hidden fade-in">
+        <div class="category-scroll" id="cat-series"></div>
+        <div class="grid-view" id="grid-series"></div>
+    </div>
+
+    <!-- MY LIST -->
+    <div id="tab-mylist" class="view hidden fade-in">
+        <div style="padding:120px 20px 0;">
+            <h1>My Watchlist</h1>
+        </div>
+        <div class="grid-view" id="grid-mylist"></div>
+        <div id="empty-list-msg" class="hidden" style="text-align:center; padding:50px; color:gray;">List is empty.</div>
+    </div>
+
+    <!-- 5. SEARCH OVERLAY -->
+    <div id="search-overlay" class="search-wrap hidden">
+        <div class="search-header">
+            <i class="fas fa-search" style="color:#666"></i>
+            <input type="text" id="search-input" placeholder="Search..." onkeyup="handleSearch(this.value)">
+            <i class="fas fa-times" style="cursor:pointer;" onclick="document.getElementById('search-overlay').classList.add('hidden')"></i>
+        </div>
+        <div style="padding:20px; overflow-y:auto; flex:1;">
+            <div class="grid-view" id="search-grid" style="padding:0;"></div>
+        </div>
+    </div>
+
+    <!-- 6. DETAILS MODAL -->
+    <div id="details-modal" class="details-modal">
+        <div class="modal-header" id="m-header">
+            <div class="close-btn" onclick="document.getElementById('details-modal').classList.remove('active')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="modal-body">
+            <h1 id="m-title" style="font-size:2rem; margin-bottom:10px;">Title</h1>
+            <div style="display:flex; gap:10px; margin-bottom:20px; align-items:center;">
+                <span style="color:#29abe2; font-weight:800;">98% Match</span>
+                <span id="m-year" style="color:var(--text-sub);"></span>
+                <span style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-size:0.8rem;">HD</span>
+            </div>
+            <p id="m-desc" style="color:#ccc; line-height:1.6; margin-bottom:25px;"></p>
+            
+            <div style="display:flex; gap:15px; margin-bottom:30px;">
+                <button class="btn btn-brand" id="m-play-btn" style="flex:1;"><i class="fas fa-play"></i> Play</button>
+                <button class="btn btn-glass" id="m-list-btn" style="width:60px; font-size:1.2rem;"><i class="fas fa-plus"></i></button>
+            </div>
+
+            <div id="series-area" class="hidden">
+                <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+                <h3 style="margin-bottom:15px;">Episodes</h3>
+                <select id="season-select" class="season-picker" onchange="renderEpisodes(this.value)"></select>
+                <div id="ep-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. MOBILE BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" data-tab="home" onclick="nav('home')"><i class="fas fa-house"></i> Home</div>
+        <div class="nav-item" data-tab="movies" onclick="nav('movies')"><i class="fas fa-clapperboard"></i> Movies</div>
+        <div class="nav-item" data-tab="series" onclick="nav('series')"><i class="fas fa-layer-group"></i> Series</div>
+        <div class="nav-item" data-tab="mylist" onclick="nav('mylist')"><i class="fas fa-bookmark"></i> My List</div>
+    </div>
+
+    <script>
+        // CONFIG
+        const DB_KEY = 'teraDb'; 
+        const USER_DB_KEY = 'streamArcUsers';
+        const SESSION_KEY = 'streamArcSession';
+        const CAT_KEY = 'streamArcCats';
+
+        // LOAD DATA
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+        let users = JSON.parse(localStorage.getItem(USER_DB_KEY)) || [];
+        let cats = JSON.parse(localStorage.getItem(CAT_KEY)) || [];
+        
+        // CHECK LOGIN STATE (Local vs Session Storage)
+        let currentUser = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+        
+        let currentSeries = null;
+        let currentHeroId = null;
+        let isLoginMode = true;
+        let pendingAvatar = null;
+
+        // --- AUTH FUNCTIONS ---
+        function checkSession() {
+            if(!currentUser) {
+                document.getElementById('auth-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.getElementById('auth-modal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                initApp();
+                updateProfileUI();
+            }
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "Welcome Back" : "Create Account";
+            document.getElementById('auth-btn-text').innerText = isLoginMode ? "Sign In" : "Sign Up";
+            document.getElementById('auth-msg').innerText = isLoginMode ? "New to StreamArc?" : "Already have an account?";
+            document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Create Account" : "Sign In";
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        function handleAuth() {
+            const u = document.getElementById('auth-user').value.trim();
+            const p = document.getElementById('auth-pass').value.trim();
+            const keepSigned = document.getElementById('remember-me').checked;
+            const err = document.getElementById('auth-error');
+
+            if(!u || !p) { err.innerText = "Please fill all fields"; err.style.display='block'; return; }
+
+            const setSession = (username) => {
+                currentUser = username;
+                if(keepSigned) localStorage.setItem(SESSION_KEY, username);
+                else sessionStorage.setItem(SESSION_KEY, username);
+                checkSession();
+            };
+
+            if(isLoginMode) {
+                const user = users.find(x => x.u === u && x.p === p);
+                if(user) setSession(user.u);
+                else { err.innerText = "Invalid credentials"; err.style.display='block'; }
+            } else {
+                if(users.find(x => x.u === u)) { err.innerText = "Username taken"; err.style.display='block'; }
+                else {
+                    users.push({u, p, list:[], avatar: null});
+                    localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+                    setSession(u);
+                }
+            }
+        }
+
+        function guestLogin() {
+            currentUser = "Guest";
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            initApp();
+            updateProfileUI();
+        }
+
+        function logout() {
+            localStorage.removeItem(SESSION_KEY);
+            sessionStorage.removeItem(SESSION_KEY);
+            currentUser = null;
+            location.reload();
+        }
+
+        // --- PROFILE FUNCTIONS ---
+        function openProfileModal() {
+            document.getElementById('profile-modal').classList.remove('hidden');
+            document.getElementById('profile-username').innerText = currentUser;
+            
+            const user = users.find(u => u.u === currentUser);
+            const preview = document.getElementById('profile-preview');
+            const input = document.getElementById('avatar-input');
+            const saveBtn = document.getElementById('save-profile-btn');
+            const removeBtn = document.getElementById('remove-avatar-btn');
+            const hint = document.getElementById('upload-hint');
+
+            if(currentUser === 'Guest') {
+                preview.src = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/user.svg";
+                preview.style.cursor = 'default';
+                input.disabled = true;
+                saveBtn.classList.add('hidden');
+                removeBtn.classList.add('hidden');
+                hint.classList.add('hidden');
+            } else {
+                preview.style.cursor = 'pointer';
+                input.disabled = false;
+                saveBtn.classList.remove('hidden');
+                hint.classList.remove('hidden');
+
+                if(user && user.avatar) {
+                    preview.src = user.avatar;
+                    removeBtn.classList.remove('hidden');
+                } else {
+                    preview.src = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/user.svg";
+                    removeBtn.classList.add('hidden');
+                }
+            }
+            pendingAvatar = null;
+        }
+
+        function handleAvatarChange(e) {
+            if(currentUser === 'Guest') return;
+            const file = e.target.files[0];
+            if(file) {
+                if(file.size > 2000000) return alert("Image too large (Max 2MB)");
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    pendingAvatar = ev.target.result;
+                    document.getElementById('profile-preview').src = pendingAvatar;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProfileChanges() {
+            if(currentUser === 'Guest') return;
+            if(pendingAvatar) {
+                const idx = users.findIndex(u => u.u === currentUser);
+                if(idx !== -1) {
+                    users[idx].avatar = pendingAvatar;
+                    localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+                    updateProfileUI();
+                    alert("Profile updated!");
+                    document.getElementById('profile-modal').classList.add('hidden');
+                }
+            } else {
+                document.getElementById('profile-modal').classList.add('hidden');
+            }
+        }
+
+        function removeAvatar() {
+            if(currentUser === 'Guest') return;
+            if(confirm("Remove profile picture?")) {
+                const idx = users.findIndex(u => u.u === currentUser);
+                if(idx !== -1) {
+                    users[idx].avatar = null;
+                    localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+                    updateProfileUI();
+                    alert("Picture removed.");
+                    document.getElementById('profile-modal').classList.add('hidden');
+                }
+            }
+        }
+
+        function updateProfileUI() {
+            const img = document.getElementById('nav-avatar-img');
+            const icon = document.getElementById('nav-avatar-icon');
+            
+            if(currentUser === 'Guest') {
+                img.style.display='none'; icon.style.display='block'; return;
+            }
+            const user = users.find(u => u.u === currentUser);
+            if(user && user.avatar) {
+                img.src = user.avatar; img.style.display='block'; icon.style.display='none';
+            } else {
+                img.style.display='none'; icon.style.display='block';
+            }
+        }
+
+        // --- APP LOGIC ---
+        function initApp() {
+            if(db.length > 0) {
+                renderHome();
+                renderGenres('movie'); renderGenres('series');
+                renderGrid('movie', 'All', 'grid-movies'); renderGrid('series', 'All', 'grid-series');
+                renderMyList();
+            }
+            window.addEventListener('scroll', () => {
+                document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+            });
+        }
+
+        function renderHome() {
+            // Hero
+            const item = db[Math.floor(Math.random() * db.length)];
+            currentHeroId = item.id;
+            document.getElementById('hero').style.backgroundImage = `url('${item.backdrop}')`;
+            document.getElementById('hero-title').innerText = item.title;
+            document.getElementById('hero-genre').innerText = item.genre;
+            document.getElementById('hero-year').innerText = item.year;
+            document.getElementById('hero-play').onclick = () => openModal(item.id);
+            updateListBtnUI(item.id, document.getElementById('hero-list-btn'));
+
+            // Lists
+            const nRow = document.getElementById('row-new'); nRow.innerHTML = '';
+            db.slice(0, 8).forEach(i => nRow.innerHTML += createCard(i));
+
+            const mRow = document.getElementById('row-movies'); mRow.innerHTML = '';
+            db.filter(i => i.type === 'movie').slice(0, 10).forEach(i => mRow.innerHTML += createCard(i));
+
+            const sRow = document.getElementById('row-series'); sRow.innerHTML = '';
+            db.filter(i => i.type === 'series').slice(0, 10).forEach(i => sRow.innerHTML += createCard(i));
+
+            // Custom Cats
+            const custArea = document.getElementById('custom-home-sections');
+            custArea.innerHTML = '';
+            cats.forEach(cat => {
+                const items = db.filter(i => cat.items.includes(i.id));
+                if(items.length > 0) {
+                    let html = '';
+                    items.forEach(i => html += createCard(i));
+                    custArea.innerHTML += `<div class="section"><div class="section-title">${cat.name}</div><div class="scroll-list">${html}</div></div>`;
+                }
+            });
+        }
+
+        function createCard(i) {
+            return `<div class="card" onclick="openModal('${i.id}')"><img src="${i.poster}" loading="lazy"></div>`;
+        }
+
+        function renderGenres(type) {
+            const div = document.getElementById(type === 'movie' ? 'cat-movies' : 'cat-series');
+            let set = new Set(); db.filter(i => i.type === type).forEach(i => i.genre.split(',').forEach(g => set.add(g.trim())));
+            let html = `<div class="cat-chip active" onclick="filterGrid('${type}', 'All', this)">All</div>`;
+            set.forEach(g => html += `<div class="cat-chip" onclick="filterGrid('${type}', '${g}', this)">${g}</div>`);
+            div.innerHTML = html;
+        }
+
+        function filterGrid(type, genre, el) {
+            el.parentElement.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            const gridId = type === 'movie' ? 'grid-movies' : 'grid-series';
+            const grid = document.getElementById(gridId); grid.innerHTML = '';
+            let data = db.filter(i => i.type === type);
+            if(genre !== 'All') data = data.filter(i => i.genre.includes(genre));
+            if(data.length === 0) grid.innerHTML = '<p style="color:gray;">No content found.</p>';
+            else data.forEach(i => grid.innerHTML += createCard(i));
+        }
+
+        function renderMyList() {
+            const grid = document.getElementById('grid-mylist'); grid.innerHTML = '';
+            const user = users.find(u => u.u === currentUser);
+            if(!user || !user.list || user.list.length === 0) {
+                document.getElementById('empty-list-msg').classList.remove('hidden'); return;
+            }
+            document.getElementById('empty-list-msg').classList.add('hidden');
+            db.filter(i => user.list.includes(i.id)).forEach(i => grid.innerHTML += createCard(i));
+        }
+
+        function toggleMyList(id, btn) {
+            if(currentUser === 'Guest') return alert("Sign in to save.");
+            const idx = users.findIndex(u => u.u === currentUser);
+            if(users[idx].list.includes(id)) {
+                users[idx].list = users[idx].list.filter(x => x !== id);
+                if(btn) btn.innerHTML = '<i class="fas fa-plus"></i>';
+            } else {
+                users[idx].list.push(id);
+                if(btn) btn.innerHTML = '<i class="fas fa-check" style="color:#29abe2"></i>';
+            }
+            localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+            renderMyList();
+        }
+
+        function updateListBtnUI(id, btn) {
+            if(currentUser === 'Guest') { btn.innerHTML = '<i class="fas fa-plus"></i>'; return; }
+            const user = users.find(u => u.u === currentUser);
+            if(user && user.list.includes(id)) btn.innerHTML = '<i class="fas fa-check" style="color:#29abe2"></i>';
+            else btn.innerHTML = '<i class="fas fa-plus"></i>';
+        }
+
+        function openSearch() { document.getElementById('search-overlay').classList.remove('hidden'); document.getElementById('search-input').focus(); }
+        function handleSearch(q) {
+            const g = document.getElementById('search-grid'); g.innerHTML = '';
+            if(!q) return;
+            db.filter(i => i.title.toLowerCase().includes(q.toLowerCase())).forEach(i => {
+                g.innerHTML += `<div class="card" onclick="openModal('${i.id}'); document.getElementById('search-overlay').classList.add('hidden')"><img src="${i.poster}"></div>`;
+            });
+        }
+
+        function openModal(id) {
+            const item = db.find(i => i.id == id);
+            currentSeries = item;
+            document.getElementById('m-header').style.backgroundImage = `url('${item.backdrop}')`;
+            document.getElementById('m-title').innerText = item.title;
+            document.getElementById('m-year').innerText = item.year;
+            document.getElementById('m-desc').innerText = item.description;
+            
+            const listBtn = document.getElementById('m-list-btn');
+            updateListBtnUI(id, listBtn);
+            listBtn.onclick = () => toggleMyList(id, listBtn);
+            
+            const playBtn = document.getElementById('m-play-btn');
+            const sArea = document.getElementById('series-area');
+            
+            if(item.type === 'movie') {
+                sArea.classList.add('hidden'); playBtn.classList.remove('hidden');
+                playBtn.onclick = () => window.open(item.streamUrl, '_blank');
+            } else {
+                playBtn.classList.add('hidden'); sArea.classList.remove('hidden');
+                loadSeasons(item);
+            }
+            document.getElementById('details-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function loadSeasons(series) {
+            const sel = document.getElementById('season-select'); sel.innerHTML = '';
+            series.seasons.forEach((s, i) => sel.innerHTML += `<option value="${i}">Season ${s.season}</option>`);
+            renderEpisodes(0);
+        }
+
+        function renderEpisodes(idx) {
+            const list = document.getElementById('ep-list'); list.innerHTML = '';
+            currentSeries.seasons[idx].episodes.forEach((ep, i) => {
+                list.innerHTML += `
+                    <div class="episode-row" onclick="window.open('${ep.url}', '_blank')">
+                        <div class="ep-index">${i+1}</div>
+                        <div class="ep-thumb"><img src="${ep.thumb || currentSeries.backdrop}"></div>
+                        <div class="ep-info">
+                            <div style="font-weight:700;font-size:0.95rem">${ep.title}</div>
+                            <div style="font-size:0.8rem;color:gray">${ep.duration || '--'}</div>
+                        </div>
+                        <i class="fas fa-play-circle" style="color:#29abe2; font-size:1.5rem"></i>
+                    </div>`;
+            });
+        }
+
+        function nav(tab) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.nav-item[data-tab="${tab}"]`)?.classList.add('active');
+            
+            document.querySelectorAll('.top-link').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.top-link[data-tab="${tab}"]`)?.classList.add('active');
+            
+            window.scrollTo(0,0);
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>
